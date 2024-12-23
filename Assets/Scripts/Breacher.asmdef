@@ -1,0 +1,16 @@
+{
+    "name": "Breacher",
+    "rootNamespace": "",
+    "references": [
+        "GUID:1d7747e33989a3f4fa50a88a80a31376"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

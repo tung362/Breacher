@@ -1,0 +1,8 @@
+light pass
+
+create level editor window
+
+obstructionMap -> 0 = obstruction, 1 = no obstruction
+
+world space to grid space = world / 2
+grid space to world space = grid * 2
