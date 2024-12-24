@@ -42,6 +42,9 @@ namespace Breacher
             _HideMap.Init();
             _HideMap.AddEye(new EyeData(new GPUEyeData(1, new Vector2Int(12, 12), GPUEyeData.ShapeType.Circle, 4)));
             _HideMap.AddEye(new EyeData(new GPUEyeData(1, new Vector2Int(8, 8), GPUEyeData.ShapeType.Circle, 6)));
+
+            _LightMap.AddLight(new LightData(new GPULightData(1, new Vector2Int(12, 12), GPULightData.ShapeType.Circle, 6, Color.red, 1.0f)));
+            _LightMap.AddLight(new LightData(new GPULightData(1, new Vector2Int(8, 8), GPULightData.ShapeType.Circle, 6, Color.green, 1.0f)));
         }
 
         private void Update()
@@ -49,6 +52,12 @@ namespace Breacher
             if (Input.GetKeyDown(KeyCode.K))
             {
                 int index = _HideMap.AddEye(new EyeData(new GPUEyeData(1, new Vector2Int(12, 12), GPUEyeData.ShapeType.Circle, 4)));
+                _HideMap.RecalculateEye(index, true);
+            }
+
+            if (Input.GetKeyDown(KeyCode.L))
+            {
+                int index = _LightMap.AddLight(new LightData(new GPULightData(1, new Vector2Int(12, 12), GPULightData.ShapeType.Circle, 4, Color.blue, 1)));
                 _HideMap.RecalculateEye(index, true);
             }
 
@@ -70,6 +79,26 @@ namespace Breacher
                 eye2._Data.Position = new Vector2Int(eye2._Data.Position.x + 1, eye2._Data.Position.y);
                 _HideMap.RecalculateEye(0, true);
                 _HideMap.RecalculateEye(1, true);
+            }
+
+            if (Input.GetKeyDown(KeyCode.B))
+            {
+                LightData light1 = _LightMap.GetLight(0);
+                LightData light2 = _LightMap.GetLight(1);
+                light1._Data.Position = new Vector2Int(light1._Data.Position.x + 1, light1._Data.Position.y);
+                light2._Data.Position = new Vector2Int(light2._Data.Position.x - 1, light2._Data.Position.y);
+                _LightMap.RecalculateLight(0, true);
+                _LightMap.RecalculateLight(1, true);
+            }
+
+            if (Input.GetKeyDown(KeyCode.V))
+            {
+                LightData light1 = _LightMap.GetLight(0);
+                LightData light2 = _LightMap.GetLight(1);
+                light1._Data.Position = new Vector2Int(light1._Data.Position.x - 1, light1._Data.Position.y);
+                light2._Data.Position = new Vector2Int(light2._Data.Position.x + 1, light2._Data.Position.y);
+                _LightMap.RecalculateLight(0, true);
+                _LightMap.RecalculateLight(1, true);
             }
         }
 

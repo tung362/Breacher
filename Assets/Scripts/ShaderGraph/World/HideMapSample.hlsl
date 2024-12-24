@@ -14,19 +14,20 @@ struct GPUEye
 StructuredBuffer<GPUEye> _Eyes;
 
 //Draw sight line within a radius.
-bool DrawSightLine(int startX, int startY, int endX, int endY, int radius, float2 gridUnit, UnityTexture2D obstructionMap)
+bool DrawSightLine(int startX, int startY, int endX, int endY, GPUEye eye, float2 gridUnit, UnityTexture2D obstructionMap)
 {
     int dx = abs(endX - startX);
     int dy = abs(endY - startY);
     int sx = startX < endX ? 1 : -1;
     int sy = startY < endY ? 1 : -1;
     int err = dx - dy;
-    int radiusSquared = radius * radius;
     int x = startX;
     int y = startY;
+    int radiusSquared = eye._Radius * eye._Radius;
     while (true)
     {
-        if (radius > 0)
+        //If eye shape requires a radius check.
+        if (eye._Shape == 0)
         {
             //float distance = Mathf.Sqrt(Mathf.Pow(x - startX, 2) + Mathf.Pow(y - startY, 2));
             //if (distance > radius) break;
@@ -36,11 +37,14 @@ bool DrawSightLine(int startX, int startY, int endX, int endY, int radius, float
             if (dxCurrent * dxCurrent + dyCurrent * dyCurrent > radiusSquared) break;
         }
 
+        //If line step is within pixel fragment's targeted grid coordinate.
         if (x == gridUnit.x && y == gridUnit.y) return true;
         
+        //If line step is obstructed.
         float4 obstruction = obstructionMap.Load(int3(x, y, 0));
         if (obstruction.x == 0) break;
 
+        //If line step reached the end grid coordinate.
         if (x == endX && y == endY) break;
 
         int e2 = 2 * err;
@@ -60,14 +64,17 @@ bool DrawSightLine(int startX, int startY, int endX, int endY, int radius, float
 }
 
 //Draw sight line within a square.
-bool DrawSightSquare(int midpointX, int midpointY, int halfSquareLength, int radius, float2 gridUnit, UnityTexture2D obstructionMap)
+bool DrawSightSquare(GPUEye eye, float2 gridUnit, UnityTexture2D obstructionMap)
 {
     //If outside of sight square then is out of sight.
-    if (gridUnit.x < midpointX - halfSquareLength || gridUnit.x > midpointX + halfSquareLength || gridUnit.y < midpointY - halfSquareLength || gridUnit.y > midpointY + halfSquareLength) return false;
+    if (gridUnit.x < eye._Position.x - eye._Radius || gridUnit.x > eye._Position.x + eye._Radius ||
+        gridUnit.y < eye._Position.y - eye._Radius || gridUnit.y > eye._Position.y + eye._Radius)
+    {
+        return false;
+    }
     
     //Instead of drawing sight lines to every square edge coordinate for each pixel fragment which would be more expensive, we instead draw a single sight line to the pixel fragment's grid coordinate.
-    if (DrawSightLine(midpointX, midpointY, (int)gridUnit.x, (int)gridUnit.y, radius, gridUnit, obstructionMap) == 1) return true;
-    return false;
+    return DrawSightLine(eye._Position.x, eye._Position.y, (int) gridUnit.x, (int) gridUnit.y, eye, gridUnit, obstructionMap);
 }
 
 //Custom shader graph node for sampling a hide map texture using grid coordinates.
@@ -80,27 +87,14 @@ void HideMapSampleTexture_float(float2 gridUnit, UnityTexture2D hideMap, out boo
 void HideMapSample_float(float2 gridUnit, UnityTexture2D obstructionMap, float eyeCount, out bool hideOut)
 {
     //Loop through each eye vision.
+    hideOut = eyeCount < 0 ? true : false;
     for (int i = 0; i < eyeCount; i++)
     {
         //Skip if eye is inactive
         if (!_Eyes[i]._Active) continue;
         
-        //Calculate vision based on eye shape.
-        switch (_Eyes[i]._Shape)
-        {
-            case 0:
-                hideOut = DrawSightSquare(_Eyes[i]._Position.x, _Eyes[i]._Position.y, _Eyes[i]._Radius, _Eyes[i]._Radius, gridUnit, obstructionMap);
-                break;
-            case 1:
-                hideOut = DrawSightSquare(_Eyes[i]._Position.x, _Eyes[i]._Position.y, _Eyes[i]._Radius, -1, gridUnit, obstructionMap);
-                break;
-            default:
-                hideOut = DrawSightSquare(_Eyes[i]._Position.x, _Eyes[i]._Position.y, _Eyes[i]._Radius, _Eyes[i]._Radius, gridUnit, obstructionMap);
-                break;
-        }
-        
+        hideOut = DrawSightSquare(_Eyes[i], gridUnit, obstructionMap);
         if (hideOut == true) return;
     }
-    hideOut = eyeCount < 0 ? true : false;
 }
 #endif
